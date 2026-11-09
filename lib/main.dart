@@ -1,6 +1,11 @@
 
-
 import 'package:flutter/material.dart';
+
+import 'screens/resume_screen.dart';
+import 'screens/jd_matcher_screen.dart';
+import 'screens/roadmap_screen.dart';
+import 'screens/mock_interview_screen.dart';
+import 'screens/jobs_screen.dart';
 
 void main() {
   runApp(const SkillBridgeApp());
@@ -25,7 +30,8 @@ class _SkillBridgeAppState extends State<SkillBridgeApp> {
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF536DFE),
-          brightness: isDarkMode ? Brightness.dark : Brightness.light,
+          brightness:
+              isDarkMode ? Brightness.dark : Brightness.light,
         ),
       ),
       home: DashboardPage(
@@ -73,6 +79,25 @@ class _DashboardPageState extends State<DashboardPage> {
     Icons.work_outline,
   ];
 
+  Widget _buildSelectedScreen(bool isMobile) {
+    switch (selectedIndex) {
+      case 0:
+        return _buildDashboard(isMobile);
+      case 1:
+        return const ResumeScreen();
+      case 2:
+        return const JDMatcherScreen();
+      case 3:
+        return const RoadmapScreen();
+      case 4:
+        return const MockInterviewScreen();
+      case 5:
+        return const JobsScreen();
+      default:
+        return _buildDashboard(isMobile);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -92,9 +117,11 @@ class _DashboardPageState extends State<DashboardPage> {
               : null,
           appBar: isMobile
               ? AppBar(
-                  title: const Text(
-                    'SkillBridge AI',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  title: Text(
+                    menuItems[selectedIndex],
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   actions: [
                     IconButton(
@@ -115,9 +142,7 @@ class _DashboardPageState extends State<DashboardPage> {
               if (!isMobile)
                 _buildSidebar(context, inDrawer: false),
               Expanded(
-                child: selectedIndex == 0
-                    ? _buildDashboard(isMobile)
-                    : _buildPlaceholder(),
+                child: _buildSelectedScreen(isMobile),
               ),
             ],
           ),
@@ -144,7 +169,6 @@ class _DashboardPageState extends State<DashboardPage> {
           children: [
             const SizedBox(height: 12),
 
-            // Application logo and name
             Row(
               children: [
                 const Icon(
@@ -181,7 +205,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
             const SizedBox(height: 12),
 
-            // Navigation items
             Expanded(
               child: ListView(
                 padding: EdgeInsets.zero,
@@ -199,7 +222,9 @@ class _DashboardPageState extends State<DashboardPage> {
                       child: InkWell(
                         borderRadius: BorderRadius.circular(10),
                         onTap: () {
-                          setState(() => selectedIndex = index);
+                          setState(() {
+                            selectedIndex = index;
+                          });
 
                           if (inDrawer &&
                               Scaffold.of(sidebarContext).isDrawerOpen) {
@@ -248,7 +273,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
             const Divider(),
 
-            // Dark mode setting
             Material(
               color: surfaceColor,
               child: SwitchListTile(
@@ -282,7 +306,6 @@ class _DashboardPageState extends State<DashboardPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Welcome section
           Row(
             children: [
               const Expanded(
@@ -314,7 +337,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
           const SizedBox(height: 28),
 
-          // Summary cards
           Wrap(
             spacing: 16,
             runSpacing: 16,
@@ -345,7 +367,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
           const SizedBox(height: 28),
 
-          // Weekly progress and next step
           LayoutBuilder(
             builder: (context, constraints) {
               final stacked = constraints.maxWidth < 650;
@@ -360,7 +381,6 @@ class _DashboardPageState extends State<DashboardPage> {
                       style: TextStyle(color: Colors.grey),
                     ),
                     const SizedBox(height: 22),
-
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -376,13 +396,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         ];
 
                         const days = [
-                          'M',
-                          'T',
-                          'W',
-                          'T',
-                          'F',
-                          'S',
-                          'S',
+                          'M', 'T', 'W', 'T', 'F', 'S', 'S',
                         ];
 
                         return Column(
@@ -470,7 +484,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
           const SizedBox(height: 25),
 
-          // Recommended tasks
           _panel(
             title: 'Recommended Tasks',
             child: Column(
@@ -622,44 +635,5 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
     );
   }
-
-  // Placeholder pages for upcoming features
-  Widget _buildPlaceholder() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              menuIcons[selectedIndex],
-              size: 55,
-              color: const Color(0xFF536DFE),
-            ),
-            const SizedBox(height: 15),
-            Text(
-              menuItems[selectedIndex],
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'This feature will be implemented in a future step.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey),
-            ),
-            const SizedBox(height: 18),
-            OutlinedButton(
-              onPressed: () {
-                setState(() => selectedIndex = 0);
-              },
-              child: const Text('Back to Dashboard'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
+
