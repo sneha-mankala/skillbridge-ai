@@ -1,12 +1,20 @@
 
+
 import 'package:flutter/material.dart';
 
 void main() {
   runApp(const SkillBridgeApp());
 }
 
-class SkillBridgeApp extends StatelessWidget {
+class SkillBridgeApp extends StatefulWidget {
   const SkillBridgeApp({super.key});
+
+  @override
+  State<SkillBridgeApp> createState() => _SkillBridgeAppState();
+}
+
+class _SkillBridgeAppState extends State<SkillBridgeApp> {
+  bool isDarkMode = false;
 
   @override
   Widget build(BuildContext context) {
@@ -15,19 +23,30 @@ class SkillBridgeApp extends StatelessWidget {
       title: 'SkillBridge AI',
       theme: ThemeData(
         useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFFF7F7F8),
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF171717),
+          seedColor: const Color(0xFF536DFE),
+          brightness: isDarkMode ? Brightness.dark : Brightness.light,
         ),
-        fontFamily: 'Arial',
       ),
-      home: const DashboardPage(),
+      home: DashboardPage(
+        isDarkMode: isDarkMode,
+        onThemeChanged: (value) {
+          setState(() => isDarkMode = value);
+        },
+      ),
     );
   }
 }
 
 class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key});
+  final bool isDarkMode;
+  final ValueChanged<bool> onThemeChanged;
+
+  const DashboardPage({
+    super.key,
+    required this.isDarkMode,
+    required this.onThemeChanged,
+  });
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
@@ -35,49 +54,219 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   int selectedIndex = 0;
-  bool darkMode = false;
 
-  final List<Map<String, dynamic>> menuItems = [
-    {'name': 'Overview', 'icon': Icons.grid_view_rounded},
-    {'name': 'Resume', 'icon': Icons.description_outlined},
-    {'name': 'JD Matcher', 'icon': Icons.search},
-    {'name': 'Roadmap', 'icon': Icons.timeline},
-    {'name': 'Quiz', 'icon': Icons.help_outline},
-    {'name': 'Interview', 'icon': Icons.chat_bubble_outline},
-    {'name': 'Jobs', 'icon': Icons.work_outline},
+  final List<String> menuItems = [
+    'Dashboard',
+    'My Resume',
+    'JD Matcher',
+    'Learning Roadmap',
+    'Mock Interview',
+    'My Jobs',
+  ];
+
+  final List<IconData> menuIcons = [
+    Icons.dashboard_outlined,
+    Icons.description_outlined,
+    Icons.compare_arrows,
+    Icons.route_outlined,
+    Icons.record_voice_over_outlined,
+    Icons.work_outline,
   ];
 
   @override
   Widget build(BuildContext context) {
-    final background = darkMode
-        ? const Color(0xFF171717)
-        : const Color(0xFFF7F7F8);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 800;
 
-    final cardColor =
-        darkMode ? const Color(0xFF262626) : Colors.white;
-
-    final textColor = darkMode ? Colors.white : Colors.black87;
-
-    return Scaffold(
-      backgroundColor: background,
-      body: SafeArea(
-        child: Row(
-          children: [
-            _buildSidebar(cardColor, textColor),
-            Expanded(
-              child: Column(
-                children: [
-                  _buildTopBar(cardColor, textColor),
-                  Expanded(
-                    child: selectedIndex == 0
-                        ? _buildOverview(
-                            cardColor,
-                            textColor,
-                            background,
-                          )
-                        : _buildOtherPage(textColor, cardColor),
+        return Scaffold(
+          drawer: isMobile
+              ? Drawer(
+                  child: Builder(
+                    builder: (drawerContext) => _buildSidebar(
+                      drawerContext,
+                      inDrawer: true,
+                    ),
                   ),
-                ],
+                )
+              : null,
+          appBar: isMobile
+              ? AppBar(
+                  title: const Text(
+                    'SkillBridge AI',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  actions: [
+                    IconButton(
+                      icon: Icon(
+                        widget.isDarkMode
+                            ? Icons.light_mode
+                            : Icons.dark_mode,
+                      ),
+                      onPressed: () {
+                        widget.onThemeChanged(!widget.isDarkMode);
+                      },
+                    ),
+                  ],
+                )
+              : null,
+          body: Row(
+            children: [
+              if (!isMobile)
+                _buildSidebar(context, inDrawer: false),
+              Expanded(
+                child: selectedIndex == 0
+                    ? _buildDashboard(isMobile)
+                    : _buildPlaceholder(),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // Sidebar navigation
+  Widget _buildSidebar(
+    BuildContext sidebarContext, {
+    required bool inDrawer,
+  }) {
+    final surfaceColor = Theme.of(context).colorScheme.surface;
+
+    return Container(
+      width: inDrawer ? 280 : 260,
+      height: double.infinity,
+      color: surfaceColor,
+      padding: const EdgeInsets.all(18),
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 12),
+
+            // Application logo and name
+            Row(
+              children: [
+                const Icon(
+                  Icons.school,
+                  color: Color(0xFF536DFE),
+                  size: 32,
+                ),
+                const SizedBox(width: 10),
+                const Expanded(
+                  child: Text(
+                    'SkillBridge AI',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 38),
+
+            const Text(
+              'MAIN MENU',
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.grey,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1,
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Navigation items
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: List.generate(menuItems.length, (index) {
+                  final selected = selectedIndex == index;
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 7),
+                    child: Material(
+                      color: selected
+                          ? const Color(0xFF536DFE)
+                              .withValues(alpha: 0.12)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(10),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(10),
+                        onTap: () {
+                          setState(() => selectedIndex = index);
+
+                          if (inDrawer &&
+                              Scaffold.of(sidebarContext).isDrawerOpen) {
+                            Navigator.pop(sidebarContext);
+                          }
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 13,
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                menuIcons[index],
+                                size: 21,
+                                color: selected
+                                    ? const Color(0xFF536DFE)
+                                    : Colors.grey,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  menuItems[index],
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: selected
+                                        ? const Color(0xFF536DFE)
+                                        : null,
+                                    fontWeight: selected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ),
+
+            const Divider(),
+
+            // Dark mode setting
+            Material(
+              color: surfaceColor,
+              child: SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Dark mode'),
+                secondary: const Icon(Icons.dark_mode_outlined),
+                value: widget.isDarkMode,
+                onChanged: widget.onThemeChanged,
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            const Text(
+              'SkillBridge AI • Version 1.0',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 11,
               ),
             ),
           ],
@@ -86,538 +275,387 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildSidebar(Color cardColor, Color textColor) {
-    return Container(
-      width: 220,
-      color: cardColor,
+  // Main dashboard
+  Widget _buildDashboard(bool isMobile) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(isMobile ? 18 : 30),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                Container(
-                  height: 34,
-                  width: 34,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF171717),
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  child: const Icon(
-                    Icons.auto_awesome,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'SkillBridge',
-                      style: TextStyle(
-                        color: textColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const Text(
-                      'AI Career OS',
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-          const SizedBox(height: 15),
-          Expanded(
-            child: ListView.builder(
-              itemCount: menuItems.length,
-              itemBuilder: (context, index) {
-                final item = menuItems[index];
-                final selected = selectedIndex == index;
-
-                return Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 9,
-                    vertical: 3,
-                  ),
-                  child: ListTile(
-                    selected: selected,
-                    selectedTileColor: darkMode
-                        ? Colors.white12
-                        : const Color(0xFFF0F0F0),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    leading: Icon(
-                      item['icon'],
-                      size: 20,
-                      color: selected
-                          ? textColor
-                          : Colors.grey,
-                    ),
-                    title: Text(
-                      item['name'],
-                      style: TextStyle(
-                        color: textColor,
-                        fontSize: 14,
-                        fontWeight: selected
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                      ),
-                    ),
-                    onTap: () {
-                      setState(() {
-                        selectedIndex = index;
-                      });
-                    },
-                  ),
-                );
-              },
-            ),
-          ),
-          const Divider(height: 1),
-          Padding(
-            padding: const EdgeInsets.all(18),
-            child: Row(
-              children: [
-                const CircleAvatar(
-                  radius: 17,
-                  backgroundColor: Color(0xFF171717),
-                  child: Text(
-                    'S',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Student',
-                      style: TextStyle(
-                        color: textColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const Text(
-                      'Pro plan',
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTopBar(Color cardColor, Color textColor) {
-    return Container(
-      height: 60,
-      padding: const EdgeInsets.symmetric(horizontal: 22),
-      decoration: BoxDecoration(
-        color: cardColor,
-        border: const Border(
-          bottom: BorderSide(color: Color(0xFFEEEEEE)),
-        ),
-      ),
-      child: Row(
-        children: [
-          Text(
-            menuItems[selectedIndex]['name'],
-            style: TextStyle(
-              color: textColor,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const Spacer(),
-          SizedBox(
-            width: 210,
-            height: 40,
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Search anything...',
-                hintStyle: const TextStyle(fontSize: 13),
-                prefixIcon: const Icon(Icons.search, size: 18),
-                filled: true,
-                fillColor: darkMode
-                    ? Colors.white10
-                    : const Color(0xFFF7F7F7),
-                contentPadding: EdgeInsets.zero,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(25),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-          ),
-          IconButton(
-            onPressed: () {
-              setState(() {
-                darkMode = !darkMode;
-              });
-            },
-            icon: Icon(
-              darkMode
-                  ? Icons.light_mode_outlined
-                  : Icons.dark_mode_outlined,
-              color: textColor,
-            ),
-          ),
-          IconButton(
-            onPressed: () {},
-            icon: Icon(
-              Icons.notifications_none,
-              color: textColor,
-            ),
-          ),
-          const CircleAvatar(
-            radius: 17,
-            backgroundColor: Color(0xFF171717),
-            child: Text(
-              'S',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOverview(
-    Color cardColor,
-    Color textColor,
-    Color background,
-  ) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final compact = constraints.maxWidth < 900;
-
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(26),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          // Welcome section
+          Row(
             children: [
-              Text(
-                'Good morning, Student ✦',
-                style: TextStyle(
-                  fontSize: 23,
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
-                ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'This view updates from your resume, JD, roadmap, quiz, interview, and jobs activity.',
-                style: TextStyle(color: Colors.grey, fontSize: 13),
-              ),
-              const SizedBox(height: 28),
-
-              // Summary cards
-              GridView.count(
-                crossAxisCount: compact ? 2 : 4,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                childAspectRatio: compact ? 1.35 : 1.45,
-                children: [
-                  _statCard(
-                    'ATS Score',
-                    '--',
-                    Icons.workspace_premium_outlined,
-                    'Upload resume to start',
-                    cardColor,
-                    textColor,
-                  ),
-                  _statCard(
-                    'JD Match',
-                    '--',
-                    Icons.track_changes,
-                    'Analyze a JD',
-                    cardColor,
-                    textColor,
-                  ),
-                  _statCard(
-                    'Quiz Score',
-                    '--',
-                    Icons.bolt,
-                    'Complete a quiz',
-                    cardColor,
-                    textColor,
-                  ),
-                  _statCard(
-                    'Jobs Saved',
-                    '0',
-                    Icons.work_outline,
-                    'Search jobs to populate',
-                    cardColor,
-                    textColor,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 25),
-
-              // Progress and tasks
-              if (compact)
-                Column(
-                  children: [
-                    _progressCard(cardColor, textColor),
-                    const SizedBox(height: 18),
-                    _tasksCard(cardColor, textColor),
-                  ],
-                )
-              else
-                Row(
+              const Expanded(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      flex: 7,
-                      child: _progressCard(cardColor, textColor),
+                    Text(
+                      'Welcome back, Sneha!',
+                      style: TextStyle(
+                        fontSize: 25,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    const SizedBox(width: 18),
-                    Expanded(
-                      flex: 3,
-                      child: _tasksCard(cardColor, textColor),
+                    SizedBox(height: 7),
+                    Text(
+                      'Build your skills. Prepare for your future.',
+                      style: TextStyle(color: Colors.grey),
                     ),
                   ],
+                ),
+              ),
+              if (!isMobile)
+                const CircleAvatar(
+                  radius: 23,
+                  child: Text('S'),
                 ),
             ],
           ),
-        );
-      },
+
+          const SizedBox(height: 28),
+
+          // Summary cards
+          Wrap(
+            spacing: 16,
+            runSpacing: 16,
+            children: [
+              _summaryCard(
+                'Career Readiness',
+                '--',
+                'Complete your profile to begin',
+                Icons.track_changes,
+                const Color(0xFF536DFE),
+              ),
+              _summaryCard(
+                'Skills Identified',
+                '0',
+                'Add skills to your profile',
+                Icons.psychology_outlined,
+                Colors.orange,
+              ),
+              _summaryCard(
+                'Learning Progress',
+                '0%',
+                'Your progress will appear here',
+                Icons.trending_up,
+                Colors.green,
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 28),
+
+          // Weekly progress and next step
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final stacked = constraints.maxWidth < 650;
+
+              final progress = _panel(
+                title: 'Weekly Learning Progress',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Your learning activity will appear here.',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                    const SizedBox(height: 22),
+
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: List.generate(7, (index) {
+                        final heights = [
+                          35.0,
+                          55.0,
+                          42.0,
+                          75.0,
+                          48.0,
+                          65.0,
+                          30.0,
+                        ];
+
+                        const days = [
+                          'M',
+                          'T',
+                          'W',
+                          'T',
+                          'F',
+                          'S',
+                          'S',
+                        ];
+
+                        return Column(
+                          children: [
+                            Container(
+                              width: 22,
+                              height: heights[index],
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF536DFE)
+                                    .withValues(alpha: 0.75),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              days[index],
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        );
+                      }),
+                    ),
+                  ],
+                ),
+              );
+
+              final profile = _panel(
+                title: 'Your Next Step',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.person_outline,
+                      size: 35,
+                      color: Color(0xFF536DFE),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Complete your student profile',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Add your education, skills and career goal '
+                      'to get personalized recommendations.',
+                      style: TextStyle(
+                        color: Colors.grey,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    FilledButton(
+                      onPressed: () {
+                        setState(() => selectedIndex = 1);
+                      },
+                      child: const Text('Get Started'),
+                    ),
+                  ],
+                ),
+              );
+
+              if (stacked) {
+                return Column(
+                  children: [
+                    progress,
+                    const SizedBox(height: 16),
+                    profile,
+                  ],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: progress),
+                  const SizedBox(width: 16),
+                  Expanded(child: profile),
+                ],
+              );
+            },
+          ),
+
+          const SizedBox(height: 25),
+
+          // Recommended tasks
+          _panel(
+            title: 'Recommended Tasks',
+            child: Column(
+              children: [
+                _taskTile(
+                  Icons.description_outlined,
+                  'Upload your resume',
+                  'Start your career profile',
+                ),
+                const Divider(),
+                _taskTile(
+                  Icons.code,
+                  'Add your technical skills',
+                  'Identify your strengths',
+                ),
+                const Divider(),
+                _taskTile(
+                  Icons.flag_outlined,
+                  'Choose your target role',
+                  'Tell us about your career goal',
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 25),
+
+          const Center(
+            child: Text(
+              'Made for your career journey • SkillBridge AI',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _statCard(
+  // Summary cards
+  Widget _summaryCard(
     String title,
     String value,
+    String subtitle,
     IconData icon,
-    String action,
-    Color cardColor,
-    Color textColor,
+    Color color,
   ) {
+    return SizedBox(
+      width: 260,
+      child: _panel(
+        title: title,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: color, size: 27),
+                const Spacer(),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 27,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              subtitle,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Reusable panel
+  Widget _panel({
+    required String title,
+    required Widget child,
+  }) {
+    final surfaceColor = Theme.of(context).colorScheme.surface;
+
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.black.withOpacity(0.04)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: surfaceColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Theme.of(context)
+              .dividerColor
+              .withValues(alpha: 0.3),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(9),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF2F2F2),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, size: 19, color: Colors.black54),
-              ),
-              const Spacer(),
-              Flexible(
-                child: Text(
-                  action,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Colors.black87,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const Spacer(),
-          Text(
-            value,
-            style: TextStyle(
-              color: textColor,
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 5),
           Text(
             title,
             style: const TextStyle(
-              color: Colors.grey,
-              fontSize: 13,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _progressCard(Color cardColor, Color textColor) {
-    return Container(
-      height: 395,
-      padding: const EdgeInsets.all(25),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.black.withOpacity(0.04)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Weekly Progress',
-            style: TextStyle(
-              color: textColor,
+              fontSize: 17,
               fontWeight: FontWeight.bold,
-              fontSize: 15,
             ),
           ),
-          const SizedBox(height: 24),
-          _progressRow('Resume strength', 'No data', 0),
-          _progressRow('JD match rate', 'No data', 0),
-          _progressRow('Roadmap completion', 'No roadmap yet', 0),
-          _progressRow('Interview score', 'Not completed', 0),
+          const SizedBox(height: 18),
+          child,
         ],
       ),
     );
   }
 
-  Widget _progressRow(String title, String status, double progress) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 22),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Text(title, style: const TextStyle(fontSize: 13)),
-              const Spacer(),
-              Text(
-                status,
-                style: const TextStyle(
-                  color: Colors.grey,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 6,
-              backgroundColor: const Color(0xFFEEEEEE),
-              valueColor: const AlwaysStoppedAnimation(
-                Color(0xFF222222),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // Recommended task tile
+  Widget _taskTile(
+    IconData icon,
+    String title,
+    String subtitle,
+  ) {
+    final surfaceColor = Theme.of(context).colorScheme.surface;
 
-  Widget _tasksCard(Color cardColor, Color textColor) {
-    final tasks = [
-      'Upload and parse resume',
-      'Run ATS analysis',
-      'Analyze JD match',
-      'Generate roadmap',
-      'Complete adaptive quiz',
-      'Complete mock interview',
-      'Save at least one job',
-    ];
-
-    return Container(
-      padding: const EdgeInsets.all(25),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.black.withOpacity(0.04)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Today's Tasks",
-            style: TextStyle(
-              color: textColor,
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
-            ),
+    return Material(
+      color: surfaceColor,
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: CircleAvatar(
+          backgroundColor:
+              const Color(0xFF536DFE).withValues(alpha: 0.12),
+          child: Icon(
+            icon,
+            color: const Color(0xFF536DFE),
           ),
-          const SizedBox(height: 15),
-          ...tasks.map(
-            (task) => Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              decoration: const BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(color: Color(0xFFF0F0F0)),
-                ),
-              ),
-              child: Text(
-                task,
-                style: TextStyle(
-                  color: textColor,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOtherPage(Color textColor, Color cardColor) {
-    return Center(
-      child: Container(
-        padding: const EdgeInsets.all(30),
-        decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(18),
         ),
+        title: Text(title),
+        subtitle: Text(subtitle),
+        trailing: const Icon(
+          Icons.arrow_forward_ios,
+          size: 15,
+        ),
+        onTap: () {
+          setState(() => selectedIndex = 1);
+        },
+      ),
+    );
+  }
+
+  // Placeholder pages for upcoming features
+  Widget _buildPlaceholder() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              menuItems[selectedIndex]['icon'],
-              size: 45,
-              color: textColor,
+              menuIcons[selectedIndex],
+              size: 55,
+              color: const Color(0xFF536DFE),
             ),
             const SizedBox(height: 15),
             Text(
-              menuItems[selectedIndex]['name'],
-              style: TextStyle(
-                fontSize: 22,
+              menuItems[selectedIndex],
+              style: const TextStyle(
+                fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: textColor,
               ),
             ),
             const SizedBox(height: 8),
             const Text(
-              'This section is coming soon.',
+              'This feature will be implemented in a future step.',
+              textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 18),
+            OutlinedButton(
+              onPressed: () {
+                setState(() => selectedIndex = 0);
+              },
+              child: const Text('Back to Dashboard'),
             ),
           ],
         ),
